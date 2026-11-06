@@ -38,6 +38,7 @@ try:
     import ruamel.yaml
     import sv_ttk
     import tkinter.ttk as ttk
+    from tkinter import messagebox
     import webbrowser
 
     from tkinter import *
@@ -57,6 +58,7 @@ Or the troubleshooting page: https://github.com/mathoudebine/turing-smart-screen
         os._exit(0)
 
 from library.sensors.sensors_python import sensors_fans, is_cpu_fan
+from library import windows_startup
 
 TURING_MODEL = "Turing Smart Screen"
 USBPCMONITOR_MODEL = "UsbPCMonitor"
@@ -416,6 +418,16 @@ class TuringConfigWindow:
                                        command=lambda: self.on_saverun_click())
         self.save_run_btn.place(x=640, y=520, height=60, width=140)
 
+        if sys.platform == "win32":
+            self.startup_var = BooleanVar(value=windows_startup.is_enabled())
+            self.startup_cb = ttk.Checkbutton(
+                self.window,
+                text="Start monitor with Windows (in tray)",
+                variable=self.startup_var,
+                command=self.on_startup_change,
+            )
+            self.startup_cb.place(x=500, y=475)
+
         self.config = None
         self.load_config_values()
 
@@ -629,6 +641,14 @@ class TuringConfigWindow:
                 subprocess.Popen([str(main_file)])
 
         self.window.destroy()
+
+    def on_startup_change(self):
+        try:
+            windows_startup.set_enabled(self.startup_var.get(), main_directory=MAIN_DIRECTORY)
+        except Exception as error:
+            self.startup_var.set(not self.startup_var.get())
+            messagebox.showerror("Windows startup", "Could not update Windows startup setting:\n%s" % error,
+                                 parent=self.window)
 
     def on_brightness_change(self, e=None):
         self.brightness_string.set(str(int(self.brightness_slider.get())) + "%")

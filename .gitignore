@@ -142,3 +142,8 @@ tmp
 
 version.txt
 external/LibreHardwareMonitor/LibreHardwareMonitorLib.sys
+
+turing-system-monitor-windows
+
+build_installer.py
+.venv-build

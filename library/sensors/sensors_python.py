@@ -34,6 +34,7 @@ import GPUtil
 import psutil
 
 import library.sensors.sensors as sensors
+from library.sensors.disk import usage_path
 from library.log import logger
 
 # AMD GPU on Linux
@@ -453,23 +454,27 @@ class Memory(sensors.Memory):
 
 class Disk(sensors.Disk):
     @staticmethod
+    def _usage():
+        return psutil.disk_usage(usage_path())
+
+    @staticmethod
     def disk_usage_percent() -> float:
         try:
-            return psutil.disk_usage("/").percent
+            return Disk._usage().percent
         except:
             return math.nan
 
     @staticmethod
     def disk_used() -> int:  # In bytes
         try:
-            return psutil.disk_usage("/").used
+            return Disk._usage().used
         except:
             return -1
 
     @staticmethod
     def disk_free() -> int:  # In bytes
         try:
-            return psutil.disk_usage("/").free
+            return Disk._usage().free
         except:
             return -1
 

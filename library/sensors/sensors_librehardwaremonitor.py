@@ -32,6 +32,7 @@ from typing import Tuple
 
 import clr  # Clr is from pythonnet package. Do not install clr package
 import psutil
+from library.sensors.disk import usage_path
 from win32api import *
 
 import library.sensors.sensors as sensors
@@ -454,16 +455,20 @@ class Memory(sensors.Memory):
 # This is because LHM is a hardware-oriented library, whereas used/free/total space is for partitions, not disks
 class Disk(sensors.Disk):
     @staticmethod
+    def _usage():
+        return psutil.disk_usage(usage_path())
+
+    @staticmethod
     def disk_usage_percent() -> float:
-        return psutil.disk_usage("/").percent
+        return Disk._usage().percent
 
     @staticmethod
     def disk_used() -> int:  # In bytes
-        return psutil.disk_usage("/").used
+        return Disk._usage().used
 
     @staticmethod
     def disk_free() -> int:  # In bytes
-        return psutil.disk_usage("/").free
+        return Disk._usage().free
 
 
 class Net(sensors.Net):
