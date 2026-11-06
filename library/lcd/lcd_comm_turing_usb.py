@@ -527,6 +527,8 @@ def write_to_device(dev, data, timeout=2000):
         ep_out.write(data, timeout)
     except usb.core.USBError as e:
         print("USB write error:", e)
+        if e.errno not in (110,):
+            raise
         return None
 
     try:
@@ -535,6 +537,8 @@ def write_to_device(dev, data, timeout=2000):
         return bytes(response)
     except usb.core.USBError as e:
         print("USB read error:", e)
+        if e.errno not in (110,):
+            raise
         return None
 
 
@@ -999,5 +1003,14 @@ class LcdCommTuringUSB(LcdComm):
         else:  # Orientation.REVERSE_PORTRAIT is initial screen orientation
             base_image = self.current_state
 
-        # Send image data (auto JPEG fallback when payload exceeds device limit)
-        send_pil_image_auto(self.dev, base_image, max_bytes=MAX_IMAGE_PAYLOAD_DEFAULT)
+        # Send image data (auto JPEG fallback when payload exceeds device limit).
+        # USB devices can be re-enumerated when other devices are plugged in; if
+        # that invalidates our handle, reacquire the display and retry a full frame.
+        try:
+            send_pil_image_auto(self.dev, base_image, max_bytes=MAX_IMAGE_PAYLOAD_DEFAULT)
+        except (usb.core.USBError, RuntimeError, ValueError) as exc:
+            logger.warning("Turing USB write failed; reconnecting and retrying: %s", exc)
+            time.sleep(0.5)
+            self.dev, self.dev_pid = find_usb_device()
+            send_sync_command(self.dev)
+            send_pil_image_auto(self.dev, base_image, max_bytes=MAX_IMAGE_PAYLOAD_DEFAULT)

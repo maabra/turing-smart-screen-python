@@ -28,6 +28,7 @@ from functools import wraps
 
 import library.config as config
 import library.stats as stats
+from library.log import logger
 
 STOPPING = False
 
@@ -193,12 +194,20 @@ def QueueHandler():
         # Empty the action queue to allow program to exit cleanly
         while not config.update_queue.empty():
             f, args = config.update_queue.get()
-            f(*args)
+            try:
+                f(*args)
+            except Exception as e:
+                # One failed display update must not terminate the queue worker.
+                logger.exception("Error while processing queued display update: %s", e)
     else:
         # Execute first action in the queue
         f, args = config.update_queue.get()
         if f:
-            f(*args)
+            try:
+                f(*args)
+            except Exception as e:
+                # Keep processing later updates after transient device errors.
+                logger.exception("Error while processing queued display update: %s", e)
 
 
 def is_queue_empty() -> bool:
