@@ -251,12 +251,15 @@ if __name__ == "__main__":
     # Open theme in default editor. You can also open the file manually in another program
     logger.debug("Opening theme file in your default editor. If it does not work, open it manually in the "
                  "editor of your choice")
-    if platform.system() == 'Darwin':  # macOS
-        subprocess.call(('open', config.MAIN_DIRECTORY / theme_file))
-    elif platform.system() == 'Windows':  # Windows
-        os.startfile(config.MAIN_DIRECTORY / theme_file)
-    else:  # linux variants
-        subprocess.call(('xdg-open', config.MAIN_DIRECTORY / theme_file))
+    try:
+        if platform.system() == 'Darwin':  # macOS
+            subprocess.call(('open', config.MAIN_DIRECTORY / theme_file))
+        elif platform.system() == 'Windows':  # Windows
+            os.startfile(config.MAIN_DIRECTORY / theme_file)
+        else:  # linux variants
+            subprocess.call(('xdg-open', config.MAIN_DIRECTORY / theme_file))
+    except Exception as e:
+        logger.warning("Could not open theme file in default editor: %s", e)
 
     # Load theme file and generate first preview
     try:
